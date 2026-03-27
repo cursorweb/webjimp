@@ -47,12 +47,11 @@ window.mouseReleased = async () => {
     const x2 = constrain(Math.max(startPoint[0], mouseX), 0, width) / currentScale;
     const y2 = constrain(Math.max(startPoint[1], mouseY), 0, height) / currentScale;
 
-    console.log(x1, y1, x2, y2);
     if (x2 - x1 < 2 || y2 - y1 < 2) return;
 
     embedStatus.textContent = "⏳ segmenting…";
     try {
-        const res = await fetch(`${API_BACKEND}/get-sticker-transparent`, {
+        const res = await fetch(`${API_BACKEND}/get-sticker-blur`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ box: { x1, y1, x2, y2 } }),
