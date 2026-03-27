@@ -129,7 +129,7 @@ async def get_sticker_transparent(req: MaskRequest):
 
         # Segment with SAM2
         with torch.inference_mode():
-            masks, scores, _ = predictor.predict(
+            masks, _, _ = predictor.predict(
                 point_coords=point_coords,
                 point_labels=point_labels,
                 box=box[None, :],
@@ -137,7 +137,6 @@ async def get_sticker_transparent(req: MaskRequest):
             )
 
         mask = masks[0]
-        best_score = float(scores[0])
 
         # --- Background with mask removed (transparent) ---
         bg = np.dstack(
@@ -178,8 +177,6 @@ async def get_sticker_transparent(req: MaskRequest):
             "sticker": f"data:image/png;base64,{sticker_base64}",
             "sticker_width": w,
             "sticker_height": h,
-            "mask_score": best_score,
-            "masked_pixels": int(np.sum(mask)),
         }
 
     except Exception as e:
