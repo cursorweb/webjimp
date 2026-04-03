@@ -1,21 +1,24 @@
 /// <reference types="p5/global" />
 import "p5";
-
-const API_BACKEND = "http://127.0.0.1:8000";
+import { embed } from "./api";
+import { BoundingBox, Snip } from "./Snipping";
 
 const imageSubmit: HTMLDivElement = document.querySelector(".image-submit")!;
 const imageUpload: HTMLInputElement = document.querySelector(".image-upload")!;
 const embedStatus: HTMLSpanElement = document.querySelector(".embed-status")!;
+const segmentBtn: HTMLButtonElement = document.querySelector(".segment-btn")!;
 
 let startPoint = [0, 0];
 let currentBitmap: ImageBitmap | null = null;
-
-// we resize the image so it's not too big
 let currentScale = 1;
+
+const snipping = new Snip();
 
 window.setup = () => {
     createCanvas(800, 600).parent("canvas-container");
     background(30);
+
+    // load example
     fetch("/example.png")
         .then((r) => r.blob())
         .then(drawBlobToCanvas);
@@ -29,19 +32,21 @@ window.draw = () => {
     }
 
     if (mouseIsPressed) {
-        const endPoint = [mouseX, mouseY];
+        const endPoint = [constrain(mouseX, 0, width), constrain(mouseY, 0, height)];
         noFill();
         strokeWeight(2);
         stroke(255, 0, 0);
         rect(startPoint[0], startPoint[1], endPoint[0] - startPoint[0], endPoint[1] - startPoint[1]);
     }
+
+    snipping.draw(currentScale);
 };
 
 window.mousePressed = () => {
     startPoint = [mouseX, mouseY];
 };
 
-window.mouseReleased = async () => {
+window.mouseReleased = () => {
     const x1 = constrain(Math.min(startPoint[0], mouseX), 0, width) / currentScale;
     const y1 = constrain(Math.min(startPoint[1], mouseY), 0, height) / currentScale;
     const x2 = constrain(Math.max(startPoint[0], mouseX), 0, width) / currentScale;
@@ -49,25 +54,32 @@ window.mouseReleased = async () => {
 
     if (x2 - x1 < 2 || y2 - y1 < 2) return;
 
+    snipping.addMask(new BoundingBox(x1, y1, x2, y2));
+    segmentBtn.disabled = false;
+
+    const canvasRect = (drawingContext as CanvasRenderingContext2D).canvas.getBoundingClientRect();
+    segmentBtn.style.position = "fixed";
+    segmentBtn.style.left = `${canvasRect.left + x2 * currentScale}px`;
+    segmentBtn.style.top = `${canvasRect.top + y2 * currentScale}px`;
+};
+
+segmentBtn.addEventListener("click", async () => {
+    if (!snipping.hasSelections) return;
+
+    segmentBtn.disabled = true;
     embedStatus.textContent = "⏳ segmenting…";
     try {
-        const res = await fetch(`${API_BACKEND}/get-sticker-blur`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ box: { x1, y1, x2, y2 } }),
-        });
-        const data = await res.json();
-        if (!data.success) { embedStatus.textContent = `❌ ${data.error}`; return; }
-
-        const bgBlob = await fetch(data.background).then((r) => r.blob());
+        const bitmap = await snipping.segment(width, height);
         currentBitmap?.close();
         currentBitmap = null;
-        currentBitmap = await createImageBitmap(bgBlob, { resizeWidth: width, resizeHeight: height });
+        currentBitmap = bitmap;
+        snipping.clear();
         embedStatus.textContent = "✅ segmented";
     } catch (err: any) {
         embedStatus.textContent = `❌ ${err.message}`;
+        segmentBtn.disabled = false;
     }
-};
+});
 
 const MAX_W = 800;
 const MAX_H = 600;
@@ -83,12 +95,11 @@ async function drawBlobToCanvas(blob: Blob) {
     bitmap.close();
     currentScale = scaleNumber;
     resizeCanvas(w, h);
+    snipping.clear();
+    segmentBtn.disabled = true;
 
     embedStatus.textContent = "⏳ embedding…";
-    const form = new FormData();
-    form.append("image", blob, "image.png");
-    fetch(`${API_BACKEND}/embed`, { method: "POST", body: form })
-        .then((r) => r.json())
+    embed(blob)
         .then((data) => {
             embedStatus.textContent = data.success ? "✅ embedded" : `❌ ${data.error}`;
         })
