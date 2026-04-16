@@ -30,7 +30,7 @@ export class Snip {
         return this.box !== null;
     }
 
-    addMask(mask: BoundingBox) {
+    setMask(mask: BoundingBox) {
         this.box = mask;
     }
 
@@ -40,20 +40,29 @@ export class Snip {
     }
 
     /**
-     * Segments each mask independently, returning the final composited background bitmap.
-     * Each mask's result becomes the input for the next (applied in order).
+     * Return ImageBitmap result
      */
-    async segment(currentWidth: number, currentHeight: number): Promise<ImageBitmap> {
-        let bgDataUrl: string | null = null;
-
+    async segment(currentWidth: number, currentHeight: number): Promise<{ bg: ImageBitmap, sticker: ImageBitmap }> {
         const data = await getStickerBlur(this);
         if (!data.success) throw new Error(data.error ?? "Segment failed");
-        bgDataUrl = data.background;
+        const bgUrl = data.background;
+        const stickerUrl = data.sticker;
 
-        if (!bgDataUrl) throw new Error("No box to segment");
+        // fetch in parallel
+        const [bgBlob, stickerBlob] = await Promise.all([
+            fetch(bgUrl).then(r => r.blob()),
+            fetch(stickerUrl).then(r => r.blob())
+        ]);
 
-        const bgBlob = await fetch(bgDataUrl).then((r) => r.blob());
-        return createImageBitmap(bgBlob, { resizeWidth: currentWidth, resizeHeight: currentHeight });
+        const [bg, sticker] = await Promise.all([
+            createImageBitmap(bgBlob, {
+                resizeWidth: currentWidth,
+                resizeHeight: currentHeight
+            }),
+            createImageBitmap(stickerBlob)
+        ]);
+
+        return { bg, sticker };
     }
 
     clear() {

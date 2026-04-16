@@ -1,7 +1,8 @@
 /// <reference types="p5/global" />
 import "p5";
 import { embed } from "./api";
-import { BoundingBox, Snip } from "./Snipping";
+import { BoundingBox, Snip } from "./Snip";
+import { Sticker } from "./Sticker";
 
 const imageSubmit: HTMLDivElement = document.querySelector(".image-submit")!;
 const imageUpload: HTMLInputElement = document.querySelector(".image-upload")!;
@@ -13,6 +14,7 @@ let currentBitmap: ImageBitmap | null = null;
 let currentScale = 1;
 
 const snipping = new Snip();
+let sticker: Sticker | null;
 
 window.setup = () => {
     createCanvas(800, 600).parent("canvas-container");
@@ -21,7 +23,7 @@ window.setup = () => {
     // load example
     fetch("/example.png")
         .then((r) => r.blob())
-        .then(drawBlobToCanvas);
+        .then(drawBaseImage);
 };
 
 window.draw = () => {
@@ -37,9 +39,13 @@ window.draw = () => {
         strokeWeight(2);
         stroke(255, 0, 0);
         rect(startPoint[0], startPoint[1], endPoint[0] - startPoint[0], endPoint[1] - startPoint[1]);
+    } else {
+        snipping.draw(currentScale);
     }
 
-    snipping.draw(currentScale);
+    if (sticker) {
+        sticker.draw();
+    }
 };
 
 window.mousePressed = () => {
@@ -54,7 +60,7 @@ window.mouseReleased = () => {
 
     if (x2 - x1 < 2 || y2 - y1 < 2) return;
 
-    snipping.addMask(new BoundingBox(x1, y1, x2, y2));
+    snipping.setMask(new BoundingBox(x1, y1, x2, y2));
     segmentBtn.disabled = false;
 
     const canvasRect = (drawingContext as CanvasRenderingContext2D).canvas.getBoundingClientRect();
@@ -72,7 +78,11 @@ segmentBtn.addEventListener("click", async () => {
         const bitmap = await snipping.segment(width, height);
         currentBitmap?.close();
         currentBitmap = null;
-        currentBitmap = bitmap;
+        currentBitmap = bitmap.bg;
+        sticker = new Sticker(0, 0, bitmap.sticker);
+        sticker.width = bitmap.sticker.width * currentScale;
+        sticker.height = bitmap.sticker.height * currentScale;
+        console.log(sticker)
         snipping.clear();
         embedStatus.textContent = "✅ segmented";
     } catch (err: any) {
@@ -84,7 +94,7 @@ segmentBtn.addEventListener("click", async () => {
 const MAX_W = 800;
 const MAX_H = 600;
 
-async function drawBlobToCanvas(blob: Blob) {
+async function drawBaseImage(blob: Blob) {
     const bitmap = await createImageBitmap(blob);
     const scaleNumber = Math.min(1, MAX_W / bitmap.width, MAX_H / bitmap.height);
     const w = Math.round(bitmap.width * scaleNumber);
@@ -110,7 +120,7 @@ async function drawBlobToCanvas(blob: Blob) {
 
 imageUpload.addEventListener("change", () => {
     const file = imageUpload.files?.[0];
-    if (file) drawBlobToCanvas(file);
+    if (file) drawBaseImage(file);
 });
 
 imageSubmit.addEventListener("paste", (e: ClipboardEvent) => {
@@ -119,5 +129,5 @@ imageSubmit.addEventListener("paste", (e: ClipboardEvent) => {
     );
     if (!item) return;
     e.preventDefault();
-    drawBlobToCanvas(item.getAsFile()!);
+    drawBaseImage(item.getAsFile()!);
 });
