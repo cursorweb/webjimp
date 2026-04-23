@@ -9,6 +9,15 @@ export class Sticker {
         this.height = data.height;
     }
 
+    move(dx: number, dy: number): void {
+        this.x += dx;
+        this.y += dy;
+    }
+
+    rotate(angle: number): void {
+        this.rotation = angle;
+    }
+
     draw(): void {
         const ctx = drawingContext as CanvasRenderingContext2D;
         ctx.save();
