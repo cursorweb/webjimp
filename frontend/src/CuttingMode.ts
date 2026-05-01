@@ -1,7 +1,8 @@
+import { Mode } from "./Mode";
 import { BoundingBox, Snip } from "./Snip";
 import { Sticker } from "./Sticker";
 
-export class CuttingMode {
+export class CuttingMode extends Mode {
     currentBitmap: ImageBitmap | null = null;
     currentScale: number = 1;
 
@@ -10,9 +11,8 @@ export class CuttingMode {
     private segmentBtn: HTMLButtonElement = document.querySelector(".segment-btn")!;
     private embedStatus: HTMLSpanElement = document.querySelector(".embed-status")!;
 
-    onSticker: ((sticker: Sticker) => void) | null = null;
-
-    constructor() {
+    constructor(onSticker: (sticker: Sticker) => void) {
+        super();
         this.segmentBtn.addEventListener("click", async () => {
             if (!this.snipping.hasSelections) return;
 
@@ -27,7 +27,7 @@ export class CuttingMode {
                 sticker.height = bitmap.sticker.height * this.currentScale;
                 this.snipping.clear();
                 this.embedStatus.textContent = "✅ segmented";
-                this.onSticker?.(sticker);
+                onSticker(sticker);
             } catch (err: any) {
                 this.embedStatus.textContent = `❌ ${err.message}`;
                 this.segmentBtn.disabled = false;
