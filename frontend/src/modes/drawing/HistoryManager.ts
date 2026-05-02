@@ -1,4 +1,4 @@
-import type { Command } from "./Command";
+import type { Command } from "../../Command";
 
 export class HistoryManager {
     private static readonly MAX_HISTORY = 32;

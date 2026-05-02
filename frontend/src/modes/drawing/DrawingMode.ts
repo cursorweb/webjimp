@@ -1,7 +1,7 @@
-import { AddStrokeCommand, EraseCommand } from "./Command";
+import { AddStrokeCommand, EraseCommand } from "../../Command";
 import { HistoryManager } from "./HistoryManager";
 import { LayerManager } from "./LayerManager";
-import { Mode } from "./Mode";
+import { Mode } from "../Mode";
 import { Stroke } from "./Stroke";
 
 export class DrawingMode extends Mode {
@@ -87,5 +87,13 @@ export class DrawingMode extends Mode {
         }
 
         this.currentStroke = null;
+    }
+
+    onUndo(): void {
+
+    }
+
+    onRedo(): void {
+
     }
 }

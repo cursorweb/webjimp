@@ -1,6 +1,6 @@
-import { CuttingMode } from "./CuttingMode";
-import { DrawingMode } from "./DrawingMode";
-import type { Mode } from "./Mode";
+import { CuttingMode } from "./modes/cutting/CuttingMode";
+import { DrawingMode } from "./modes/drawing/DrawingMode";
+import type { Mode } from "./modes/Mode";
 import type { Sticker } from "./Sticker";
 
 export class AppState {

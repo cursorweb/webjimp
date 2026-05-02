@@ -1,5 +1,5 @@
 import type { Layer } from "./Layer";
-import type { Stroke } from "./Stroke";
+import type { Stroke } from "./modes/drawing/Stroke";
 
 export interface Command {
     execute(): void;

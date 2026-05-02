@@ -1,7 +1,7 @@
 import { embed } from "./api";
-import { Mode } from "./Mode";
+import { Mode } from "../Mode";
 import { BoundingBox, Snip } from "./Snip";
-import { Sticker } from "./Sticker";
+import { Sticker } from "../../Sticker";
 
 const MAX_W = 800;
 const MAX_H = 600;
@@ -116,5 +116,13 @@ export class CuttingMode extends Mode {
         this.segmentBtn.style.position = "fixed";
         this.segmentBtn.style.left = `${canvasRect.left + x2 * scale}px`;
         this.segmentBtn.style.top = `${canvasRect.top + y2 * scale}px`;
+    }
+
+    onUndo(): void {
+
+    }
+
+    onRedo(): void {
+
     }
 }
