@@ -12,10 +12,22 @@ export class AppState {
 
     private tabs = document.querySelectorAll<HTMLButtonElement>(".tabs button");
 
+    private undoBtn = document.querySelector<HTMLButtonElement>(".undo-btn")!;
+    private redoBtn = document.querySelector<HTMLButtonElement>(".redo-btn")!;
+
     constructor() {
         this.tabs[0].addEventListener("click", () => this.setActive(this.drawingMode, 0));
         this.tabs[1].addEventListener("click", () => this.setActive(this.cuttingMode, 1));
         this.setActive(this.drawingMode, 0);
+
+        window.addEventListener("keydown", (e) => {
+            if (!e.ctrlKey && !e.metaKey) return;
+            if (e.key == "z") { e.preventDefault(); e.shiftKey ? this.active.onRedo() : this.active.onUndo(); }
+            if (e.key == "y") { e.preventDefault(); this.active.onRedo(); }
+        });
+
+        this.undoBtn.addEventListener("click", () => this.active.onUndo());
+        this.redoBtn.addEventListener("click", () => this.active.onRedo());
     }
 
     private setActive(mode: Mode, tabIndex: number) {

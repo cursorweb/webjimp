@@ -5,14 +5,6 @@ export class HistoryManager {
     private undoStack: Command[] = [];
     private redoStack: Command[] = [];
 
-    constructor() {
-        window.addEventListener("keydown", (e) => {
-            if (!e.ctrlKey && !e.metaKey) return;
-            if (e.key == "z") { e.preventDefault(); e.shiftKey ? this.redo() : this.undo(); }
-            if (e.key == "y") { e.preventDefault(); this.redo(); }
-        });
-    }
-
     executeCommand(cmd: Command) {
         cmd.execute();
         this.undoStack.push(cmd);

@@ -118,11 +118,6 @@ export class CuttingMode extends Mode {
         this.segmentBtn.style.top = `${canvasRect.top + y2 * scale}px`;
     }
 
-    onUndo(): void {
-
-    }
-
-    onRedo(): void {
-
-    }
+    onUndo() {}
+    onRedo() {}
 }

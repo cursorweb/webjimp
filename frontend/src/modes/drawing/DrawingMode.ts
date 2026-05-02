@@ -20,8 +20,6 @@ export class DrawingMode extends Mode {
     private cursorBtn = document.querySelector<HTMLButtonElement>(".cursor-btn")!;
     private paintBtn = document.querySelector<HTMLButtonElement>(".paint-btn")!;
     private eraserBtn = document.querySelector<HTMLButtonElement>(".eraser-btn")!;
-    private undoBtn = document.querySelector<HTMLButtonElement>(".undo-btn")!;
-    private redoBtn = document.querySelector<HTMLButtonElement>(".redo-btn")!;
 
     private onCursor = () => { this.brush = "select"; this.setActiveBtn(this.cursorBtn); };
     private onPaint = () => { this.brush = "paint"; this.setActiveBtn(this.paintBtn); };
@@ -33,9 +31,6 @@ export class DrawingMode extends Mode {
         this.paintBtn.addEventListener("click", this.onPaint);
         this.eraserBtn.addEventListener("click", this.onErase);
         this.setActiveBtn(this.paintBtn);
-
-        this.undoBtn.addEventListener("click", () => this.history.undo());
-        this.redoBtn.addEventListener("click", () => this.history.redo());
     }
 
     private setActiveBtn(active: HTMLButtonElement) {
@@ -67,12 +62,16 @@ export class DrawingMode extends Mode {
     }
 
     mousePressed() {
-        const weight = this.brush == "erase" ? this.eraserSize : this.weight;
-        this.currentStroke = new Stroke(this.colors[this.layerManager.activeLayer], weight);
-        this.currentStroke.points.push([mouseX, mouseY]);
+        if (this.brush != "select") {
+            const weight = this.brush == "erase" ? this.eraserSize : this.weight;
+            this.currentStroke = new Stroke(this.colors[this.layerManager.activeLayer], weight);
+            this.currentStroke.points.push([mouseX, mouseY]);
+        }
     }
 
     mouseDragged() {
+        if (this.brush == "select") return;
+
         this.currentStroke?.points.push([mouseX, mouseY]);
     }
 
@@ -89,11 +88,6 @@ export class DrawingMode extends Mode {
         this.currentStroke = null;
     }
 
-    onUndo(): void {
-
-    }
-
-    onRedo(): void {
-
-    }
+    onUndo() { this.history.undo(); }
+    onRedo() { this.history.redo(); }
 }
