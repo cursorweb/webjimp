@@ -19,15 +19,29 @@ export class Layer {
         this.strokes.push(stroke);
     }
 
+    addStrokes(strokes: Stroke[]) {
+        this.strokes.push(...strokes);
+    }
+
+    removeStrokes(strokes: Stroke[]) {
+        const toRemove = new Set(strokes);
+        this.strokes = this.strokes.filter(s => !toRemove.has(s));
+    }
+
+    getHits(eraser: Stroke): Stroke[] {
+        return this.strokes.filter(stroke => this.hitsStroke(eraser, stroke));
+    }
+
     previewErase(eraser: Stroke) {
+        const hits = new Set(this.getHits(eraser));
         for (const sticker of this.stickers) sticker.draw();
         for (const stroke of this.strokes) {
-            if (!this.hitsStroke(eraser, stroke)) stroke.draw();
+            if (!hits.has(stroke)) stroke.draw();
         }
     }
 
     eraseStroke(eraser: Stroke) {
-        this.strokes = this.strokes.filter(stroke => !this.hitsStroke(eraser, stroke));
+        this.removeStrokes(this.getHits(eraser));
     }
 
     private hitsStroke(eraser: Stroke, stroke: Stroke): boolean {

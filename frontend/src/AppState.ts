@@ -20,7 +20,7 @@ export class AppState {
 
     private setActive(mode: Mode, tabIndex: number) {
         this.active = mode;
-        this.tabs.forEach((btn, i) => btn.disabled = i === tabIndex);
+        this.tabs.forEach((btn, i) => btn.disabled = i == tabIndex);
 
         const isDrawing = mode === this.drawingMode;
         document.querySelectorAll<HTMLElement>(".draw-mode")
