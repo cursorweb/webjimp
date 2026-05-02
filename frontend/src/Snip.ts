@@ -27,7 +27,7 @@ export class Snip {
     public points: ClickPoint[] = [];
 
     get hasSelections(): boolean {
-        return this.box !== null;
+        return this.box != null;
     }
 
     setMask(mask: BoundingBox) {

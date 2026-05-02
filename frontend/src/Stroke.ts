@@ -2,8 +2,12 @@ export class Stroke {
     points: [number, number][] = [];
     constructor(public color: p5.Color, public weight = 2) { }
 
-    draw() {
+    draw(/*isErase: boolean = false*/) {
+        // if (isErase) {
+        //     stroke(0, 0, 0, 200);
+        // } else {
         stroke(this.color);
+        // }
         strokeWeight(this.weight);
 
         if (this.points.length == 1) {
