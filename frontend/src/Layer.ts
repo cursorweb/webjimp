@@ -32,6 +32,19 @@ export class Layer {
         return this.strokes.filter(stroke => this.hitsStroke(eraser, stroke));
     }
 
+    previewOffset(selected: Set<Stroke>, dx: number, dy: number) {
+        for (const sticker of this.stickers) sticker.draw();
+        for (const stroke of this.strokes) {
+            if (!selected.has(stroke)) stroke.draw();
+        }
+        push();
+        translate(dx, dy);
+        for (const stroke of this.strokes) {
+            if (selected.has(stroke)) stroke.draw();
+        }
+        pop();
+    }
+
     previewErase(eraser: Stroke) {
         const hits = new Set(this.getHits(eraser));
         for (const sticker of this.stickers) sticker.draw();

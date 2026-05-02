@@ -1,10 +1,13 @@
-import type { Command } from "../../Command";
+import type { Command } from "./Command";
 
 export class HistoryManager {
     private static readonly MAX_HISTORY = 32;
     private undoStack: Command[] = [];
     private redoStack: Command[] = [];
 
+    /**
+     * Execute the change, and also save the command
+     */
     executeCommand(cmd: Command) {
         cmd.execute();
         this.undoStack.push(cmd);
