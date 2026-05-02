@@ -1,6 +1,10 @@
+import { embed } from "./api";
 import { Mode } from "./Mode";
 import { BoundingBox, Snip } from "./Snip";
 import { Sticker } from "./Sticker";
+
+const MAX_W = 800;
+const MAX_H = 600;
 
 export class CuttingMode extends Mode {
     currentBitmap: ImageBitmap | null = null;
@@ -10,10 +14,14 @@ export class CuttingMode extends Mode {
     private startPoint = [0, 0];
     private segmentBtn: HTMLButtonElement = document.querySelector(".segment-btn")!;
     private embedStatus: HTMLSpanElement = document.querySelector(".embed-status")!;
+    private imageUpload: HTMLInputElement = document.querySelector(".image-upload")!;
+    private imageSubmit: HTMLDivElement = document.querySelector(".image-submit")!;
+
+    private onSegment: () => void;
 
     constructor(onSticker: (sticker: Sticker) => void) {
         super();
-        this.segmentBtn.addEventListener("click", async () => {
+        this.onSegment = async () => {
             if (!this.snipping.hasSelections) return;
 
             this.segmentBtn.disabled = true;
@@ -32,7 +40,44 @@ export class CuttingMode extends Mode {
                 this.embedStatus.textContent = `❌ ${err.message}`;
                 this.segmentBtn.disabled = false;
             }
+        };
+
+        this.segmentBtn.addEventListener("click", this.onSegment);
+
+        this.imageUpload.addEventListener("change", () => {
+            const file = this.imageUpload.files?.[0];
+            if (file) this.loadBlob(file);
         });
+
+        this.imageSubmit.addEventListener("paste", (e: ClipboardEvent) => {
+            const item = Array.from(e.clipboardData?.items ?? []).find((i) =>
+                i.type.startsWith("image/")
+            );
+            if (!item) return;
+            e.preventDefault();
+            this.loadBlob(item.getAsFile()!);
+        });
+    }
+
+    async loadBlob(blob: Blob) {
+        const bitmap = await createImageBitmap(blob);
+        const scaleNumber = Math.min(1, MAX_W / bitmap.width, MAX_H / bitmap.height);
+        const w = Math.round(bitmap.width * scaleNumber);
+        const h = Math.round(bitmap.height * scaleNumber);
+        this.currentBitmap?.close();
+        this.currentBitmap = await createImageBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, { resizeWidth: w, resizeHeight: h });
+        bitmap.close();
+        this.currentScale = scaleNumber;
+        resizeCanvas(w, h);
+
+        this.embedStatus.textContent = "⏳ embedding…";
+        embed(blob)
+            .then((data) => {
+                this.embedStatus.textContent = data.success ? "✅ embedded" : `❌ ${data.error}`;
+            })
+            .catch((err) => {
+                this.embedStatus.textContent = `❌ ${err.message}`;
+            });
     }
 
     draw() {

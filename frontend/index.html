@@ -14,15 +14,25 @@
     <button>Draw mode</button>
     <button>Snip mode</button>
   </div>
-  <div class="toolbar">
+
+  <div class="toolbar draw-mode">
     <button class="cursor-btn">Select</button>
     <button class="paint-btn">Paintbrush</button>
     <button class="eraser-btn">Eraser</button>
   </div>
-  <div contenteditable class="image-submit"></div>
-  <input type="file" accept="image/*" class="image-upload" />
-  <span class="embed-status"></span>
-  <button class="segment-btn" disabled>Segment</button>
+
+  <div class="snip-mode">
+    <div contenteditable class="image-submit"></div>
+    <input type="file" accept="image/*" class="image-upload" />
+    <span class="embed-status"></span>
+    <button class="segment-btn" disabled>Segment</button>
+  </div>
+
+  <div class="draw-mode">
+    <div class="layers"></div>
+    <button class="addlayer-btn">+ Layer</button>
+  </div>
+
 
   <div id="canvas-container"></div>
 
