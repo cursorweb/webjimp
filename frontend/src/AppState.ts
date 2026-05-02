@@ -22,8 +22,8 @@ export class AppState {
 
         window.addEventListener("keydown", (e) => {
             if (!e.ctrlKey && !e.metaKey) return;
-            if (e.key == "z") { e.preventDefault(); e.shiftKey ? this.active.onRedo() : this.active.onUndo(); }
-            if (e.key == "y") { e.preventDefault(); this.active.onRedo(); }
+            if (e.key == "z" || e.key == "Z") { e.preventDefault(); e.shiftKey ? this.active.onRedo() : this.active.onUndo(); }
+            if (e.key == "y" || e.key == "Y") { e.preventDefault(); this.active.onRedo(); }
         });
 
         this.undoBtn.addEventListener("click", () => this.active.onUndo());

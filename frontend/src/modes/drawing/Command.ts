@@ -31,15 +31,13 @@ export class MoveCommand implements Command {
     constructor(private strokes: Stroke[], private dx: number, private dy: number) { }
 
     execute() {
-        for (const s of this.strokes) {
-            s.points = s.points.map(([x, y]) => [x + this.dx, y + this.dy]);
-        }
+        for (const s of this.strokes)
+            for (const pt of s.points) { pt[0] += this.dx; pt[1] += this.dy; }
     }
 
     undo() {
-        for (const s of this.strokes) {
-            s.points = s.points.map(([x, y]) => [x - this.dx, y - this.dy]);
-        }
+        for (const s of this.strokes)
+            for (const pt of s.points) { pt[0] -= this.dx; pt[1] -= this.dy; }
     }
 }
 

@@ -24,8 +24,8 @@ export class DrawingMode extends Mode {
     private eraserBtn = document.querySelector<HTMLButtonElement>(".eraser-btn")!;
 
     private onCursor = () => { this.brush = "select"; this.setActiveBtn(this.cursorBtn); };
-    private onPaint = () => { this.brush = "paint"; this.setActiveBtn(this.paintBtn); };
-    private onErase = () => { this.brush = "erase"; this.setActiveBtn(this.eraserBtn); };
+    private onPaint = () => { this.selection.deselect(); this.brush = "paint"; this.setActiveBtn(this.paintBtn); };
+    private onErase = () => { this.selection.deselect(); this.brush = "erase"; this.setActiveBtn(this.eraserBtn); };
 
     constructor() {
         super();
@@ -43,9 +43,7 @@ export class DrawingMode extends Mode {
 
     draw() {
         const { layers, activeLayer } = this.layerManager;
-        const selectedSet = this.brush == "select" && this.selection.hasSelection
-            ? new Set(this.selection.selectedStrokes)
-            : null;
+        const selectedSet = this.brush == "select" ? this.selection.selectedSet : null;
 
         for (let i = 0; i < layers.length; i++) {
             if (this.brush == "erase" && this.currentStroke && i == activeLayer) {
@@ -63,11 +61,16 @@ export class DrawingMode extends Mode {
 
         if (this.brush == "select") this.selection.draw();
 
-        stroke(255, 128);
-        strokeWeight(1);
-        noFill();
+        if (this.brush != "select") {
+            noCursor();
+            stroke(255, 128);
+            strokeWeight(1);
+            noFill();
 
-        circle(mouseX, mouseY, this.brush == "erase" ? this.eraserSize : this.weight);
+            circle(mouseX, mouseY, this.brush == "erase" ? this.eraserSize : this.weight);
+        } else {
+            cursor(ARROW);
+        }
     }
 
     mousePressed() {

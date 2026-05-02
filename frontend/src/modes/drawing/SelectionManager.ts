@@ -11,6 +11,7 @@ export class SelectionManager {
 
     box: { x1: number; y1: number; x2: number; y2: number } | null = null;
     selectedStrokes: Stroke[] = [];
+    selectedSet: Set<Stroke> | null = null;
 
     private dragAnchor = [0, 0];
     offsetX = 0;
@@ -55,8 +56,10 @@ export class SelectionManager {
         );
 
         if (this.selectedStrokes.length > 0) {
+            this.selectedSet = new Set(this.selectedStrokes);
             this.state = "selected";
         } else {
+            this.selectedSet = null;
             this.state = "idle";
             this.box = null;
         }
@@ -95,6 +98,7 @@ export class SelectionManager {
         this.state = "idle";
         this.box = null;
         this.selectedStrokes = [];
+        this.selectedSet = null;
         this.offsetX = 0;
         this.offsetY = 0;
     }

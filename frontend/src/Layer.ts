@@ -53,10 +53,6 @@ export class Layer {
         }
     }
 
-    eraseStroke(eraser: Stroke) {
-        this.removeStrokes(this.getHits(eraser));
-    }
-
     private hitsStroke(eraser: Stroke, stroke: Stroke): boolean {
         const r = eraser.weight / 2;
         return stroke.points.some(([px, py]) => this.distToPath(px, py, eraser.points) <= r)
@@ -70,6 +66,7 @@ export class Layer {
         }
         let min = Infinity;
         for (let i = 0; i < path.length - 1; i++) {
+            // point line projection
             const [ax, ay] = path[i], [bx, by] = path[i + 1];
             const dx = bx - ax, dy = by - ay;
             const lenSq = dx * dx + dy * dy;
