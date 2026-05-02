@@ -11,9 +11,8 @@ export class DrawingMode extends Mode {
     private selection = new SelectionManager();
     color = color(255, 0, 0);
 
-    private colors = [color(255, 0, 0), color(0, 0, 255)];
-
     private currentStroke: Stroke | null = null;
+    private selectedColor: p5.Color = color(220, 50, 50);
 
     brush: "paint" | "select" | "erase" = "paint";
     eraserSize = 20;
@@ -22,10 +21,30 @@ export class DrawingMode extends Mode {
     private cursorBtn = document.querySelector<HTMLButtonElement>(".cursor-btn")!;
     private paintBtn = document.querySelector<HTMLButtonElement>(".paint-btn")!;
     private eraserBtn = document.querySelector<HTMLButtonElement>(".eraser-btn")!;
+    private colorBtnsEl = document.querySelector<HTMLDivElement>(".color-btns")!;
+    private brushWidthInput = document.querySelector<HTMLInputElement>(".brush-width")!;
+    private colorBtns: HTMLButtonElement[] = [];
+
+    private static readonly PALETTE: [number, number, number][] = [
+        [0, 0, 0],      [255, 255, 255],
+        [220, 50, 50],  [255, 140, 0],  [255, 220, 0],
+        [50, 180, 50],  [0, 190, 220],  [50, 50, 220],
+        [140, 50, 220], [220, 50, 150],
+    ];
 
     private onCursor = () => { this.brush = "select"; this.setActiveBtn(this.cursorBtn); };
-    private onPaint = () => { this.selection.deselect(); this.brush = "paint"; this.setActiveBtn(this.paintBtn); };
-    private onErase = () => { this.selection.deselect(); this.brush = "erase"; this.setActiveBtn(this.eraserBtn); };
+    private onPaint = () => {
+        this.selection.deselect();
+        this.brush = "paint";
+        this.setActiveBtn(this.paintBtn);
+        this.brushWidthInput.value = String(this.weight);
+    };
+    private onErase = () => {
+        this.selection.deselect();
+        this.brush = "erase";
+        this.setActiveBtn(this.eraserBtn);
+        this.brushWidthInput.value = String(this.eraserSize);
+    };
 
     constructor() {
         super();
@@ -33,12 +52,33 @@ export class DrawingMode extends Mode {
         this.paintBtn.addEventListener("click", this.onPaint);
         this.eraserBtn.addEventListener("click", this.onErase);
         this.setActiveBtn(this.paintBtn);
+
+        for (const [r, g, b] of DrawingMode.PALETTE) {
+            const btn = document.createElement("button");
+            btn.style.background = `rgb(${r},${g},${b})`;
+            btn.addEventListener("click", () => this.setSelectedColor(color(r, g, b), btn));
+            this.colorBtnsEl.appendChild(btn);
+            this.colorBtns.push(btn);
+        }
+        this.setSelectedColor(this.selectedColor, this.colorBtns[2]);
+
+        this.brushWidthInput.value = String(this.weight);
+        this.brushWidthInput.addEventListener("input", () => {
+            const val = Number(this.brushWidthInput.value);
+            if (this.brush == "erase") this.eraserSize = val;
+            else this.weight = val;
+        });
     }
 
     private setActiveBtn(active: HTMLButtonElement) {
         for (const btn of [this.cursorBtn, this.paintBtn, this.eraserBtn]) {
             btn.disabled = btn == active;
         }
+    }
+
+    private setSelectedColor(c: p5.Color, btn: HTMLButtonElement) {
+        this.selectedColor = c;
+        this.colorBtns.forEach(b => b.disabled = b === btn);
     }
 
     draw() {
@@ -62,14 +102,11 @@ export class DrawingMode extends Mode {
         if (this.brush == "select") this.selection.draw();
 
         if (this.brush != "select") {
-            noCursor();
             stroke(255, 128);
             strokeWeight(1);
             noFill();
 
             circle(mouseX, mouseY, this.brush == "erase" ? this.eraserSize : this.weight);
-        } else {
-            cursor(ARROW);
         }
     }
 
@@ -84,9 +121,8 @@ export class DrawingMode extends Mode {
             return;
         }
 
-        // erase or paint
         const weight = this.brush == "erase" ? this.eraserSize : this.weight;
-        this.currentStroke = new Stroke(this.colors[this.layerManager.activeLayer], weight);
+        this.currentStroke = new Stroke(this.selectedColor, weight);
         this.currentStroke.points.push([mouseX, mouseY]);
     }
 
@@ -110,7 +146,6 @@ export class DrawingMode extends Mode {
                     this.history.executeCommand(new MoveCommand(this.selection.selectedStrokes, dx, dy));
                 }
             } else {
-                // finished selecting
                 this.selection.finalize(this.layerManager.getActiveLayer());
             }
             return;
