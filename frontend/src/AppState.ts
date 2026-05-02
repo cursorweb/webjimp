@@ -22,7 +22,7 @@ export class AppState {
         this.active = mode;
         this.tabs.forEach((btn, i) => btn.disabled = i == tabIndex);
 
-        const isDrawing = mode === this.drawingMode;
+        const isDrawing = mode == this.drawingMode;
         document.querySelectorAll<HTMLElement>(".draw-mode")
             .forEach(el => el.style.display = isDrawing ? "" : "none");
         document.querySelectorAll<HTMLElement>(".snip-mode")

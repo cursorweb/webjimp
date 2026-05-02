@@ -51,7 +51,7 @@ export class Layer {
     }
 
     private distToPath(px: number, py: number, path: [number, number][]): number {
-        if (path.length === 1) {
+        if (path.length == 1) {
             const [ex, ey] = path[0];
             return Math.hypot(px - ex, py - ey);
         }
@@ -60,7 +60,7 @@ export class Layer {
             const [ax, ay] = path[i], [bx, by] = path[i + 1];
             const dx = bx - ax, dy = by - ay;
             const lenSq = dx * dx + dy * dy;
-            const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+            const t = lenSq == 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
             min = Math.min(min, Math.hypot(px - (ax + t * dx), py - (ay + t * dy)));
         }
         return min;

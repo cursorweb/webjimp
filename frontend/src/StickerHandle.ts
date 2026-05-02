@@ -31,9 +31,9 @@ export class StickerHandle {
     }
 
     onDrag(x: number, y: number, dx: number, dy: number): void {
-        if (this.dragMode === "body") {
+        if (this.dragMode == "body") {
             this.sticker.move(dx, dy);
-        } else if (this.dragMode === "rotate") {
+        } else if (this.dragMode == "rotate") {
             const cx = this.sticker.x + this.sticker.width / 2;
             const cy = this.sticker.y + this.sticker.height / 2;
             this.sticker.rotate(Math.atan2(y - cy, x - cx) + Math.PI / 2);

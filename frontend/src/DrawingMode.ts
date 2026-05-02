@@ -98,7 +98,7 @@ export class DrawingMode extends Mode {
 
     private setActiveLayer(index: number) {
         this.currentLayer = index;
-        this.layerBtns.forEach((btn, i) => btn.disabled = i === index);
+        this.layerBtns.forEach((btn, i) => btn.disabled = i == index);
     }
 
     private setActiveBtn(active: HTMLButtonElement) {
@@ -114,11 +114,12 @@ export class DrawingMode extends Mode {
             } else {
                 this.layers[i].draw();
             }
+
+            if (i == this.currentLayer && this.brush != "erase") {
+                this.currentStroke?.draw();
+            }
         }
 
-        if (this.brush !== "erase") {
-            this.currentStroke?.draw();
-        }
 
         stroke(255, 128);
         strokeWeight(1);
