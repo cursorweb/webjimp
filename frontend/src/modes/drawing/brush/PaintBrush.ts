@@ -1,7 +1,7 @@
 import { AddStrokeCommand, type Command } from "../Command";
 import { Brush } from "./Brush";
 import { Stroke } from "../Stroke";
-import type { Layer } from "../../../Layer";
+import type { Layer } from "../Layer";
 
 const PALETTE: [number, number, number][] = [
     [0, 0, 0], [255, 255, 255],

@@ -1,4 +1,4 @@
-import type { Layer } from "../../Layer";
+import type { Layer } from "./Layer";
 import type { Stroke } from "./Stroke";
 
 export interface Command {

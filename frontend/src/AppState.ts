@@ -8,7 +8,7 @@ export class AppState {
     cuttingMode = new CuttingMode(s => this.stickers.push(s));
     stickers: Sticker[] = [];
 
-    active: Mode = this.drawingMode;
+    active!: Mode;
 
     private tabs = document.querySelectorAll<HTMLButtonElement>(".tabs button");
 
@@ -18,7 +18,7 @@ export class AppState {
     constructor() {
         this.tabs[0].addEventListener("click", () => this.setActive(this.drawingMode, 0));
         this.tabs[1].addEventListener("click", () => this.setActive(this.cuttingMode, 1));
-        this.setActive(this.drawingMode, 0);
+        this.setActive(this.cuttingMode, 1);
 
         window.addEventListener("keydown", (e) => {
             if (!e.ctrlKey && !e.metaKey) return;

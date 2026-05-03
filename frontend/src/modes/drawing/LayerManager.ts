@@ -1,4 +1,4 @@
-import { Layer } from "../../Layer";
+import { Layer } from "./Layer";
 
 export class LayerManager {
     layers: Layer[] = [new Layer()];

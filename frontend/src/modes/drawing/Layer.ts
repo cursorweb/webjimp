@@ -1,5 +1,5 @@
-import type { Sticker } from "./Sticker";
-import type { Stroke } from "./modes/drawing/Stroke";
+import type { Sticker } from "../../Sticker";
+import type { Stroke } from "./Stroke";
 
 export class Layer {
     stickers: Sticker[] = [];

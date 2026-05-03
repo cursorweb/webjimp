@@ -13,8 +13,20 @@ window.draw = () => {
     app.active.draw();
 };
 
-const onCanvas = () => mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height;
+function onCanvas() {
+    return mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height;
+}
 
-window.mousePressed = () => { if (onCanvas()) app.active.mousePressed(); };
-window.mouseDragged = () => { if (onCanvas()) app.active.mouseDragged(); };
+window.mousePressed = () => {
+    if (onCanvas()) {
+        app.active.mousePressed();
+    }
+};
+
+window.mouseDragged = () => {
+    if (onCanvas()) {
+        app.active.mouseDragged();
+    }
+};
+
 window.mouseReleased = () => app.active.mouseReleased();

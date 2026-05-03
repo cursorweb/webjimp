@@ -1,4 +1,4 @@
-import type { Layer } from "../../../Layer";
+import type { Layer } from "../Layer";
 import type { Command } from "../Command";
 
 export abstract class Brush {

@@ -1,7 +1,7 @@
 import { MoveCommand, type Command } from "../Command";
 import { Brush } from "../brush/Brush";
 import { SelectionManager } from "../SelectionManager";
-import type { Layer } from "../../../Layer";
+import type { Layer } from "../Layer";
 
 export class SelectBrush extends Brush {
     private selection = new SelectionManager();
