@@ -1,11 +1,11 @@
 import { CuttingMode } from "./modes/cutting/CuttingMode";
 import { DrawingMode } from "./modes/drawing/DrawingMode";
 import type { Mode } from "./modes/Mode";
-import type { Sticker } from "./Sticker";
+import { Sticker } from "./modes/Sticker";
 
 export class AppState {
     drawingMode = new DrawingMode();
-    cuttingMode = new CuttingMode(s => this.stickers.push(s));
+    cuttingMode = new CuttingMode(b => this.stickers.push(new Sticker(0, 0, b)));
     stickers: Sticker[] = [];
 
     active!: Mode;

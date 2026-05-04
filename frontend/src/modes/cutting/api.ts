@@ -1,4 +1,4 @@
-import type { Snip } from "./Snip";
+import type { SnipPayload } from "./SnipEditor";
 
 export const API_BACKEND = "http://127.0.0.1:8000";
 
@@ -9,30 +9,19 @@ export async function embed(blob: Blob): Promise<{ success: boolean; error?: str
     return res.json();
 }
 
-export interface StickerBlurResult {
+export interface SegmentResult {
     success: boolean;
-    background: string;
     sticker: string;
     sticker_width: number;
     sticker_height: number;
     error?: string;
 }
 
-export async function getStickerBlur(snip: Snip): Promise<StickerBlurResult> {
-    const res = await fetch(`${API_BACKEND}/get-sticker-blur`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ box: snip.box, points: snip.points }),
-    });
-    return res.json();
-}
-
-
-export async function getStickerNoBlur(snip: Snip): Promise<StickerBlurResult> {
+export async function segment(snip: SnipPayload): Promise<SegmentResult> {
     const res = await fetch(`${API_BACKEND}/get-sticker-transparent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ box: snip.box, points: snip.points }),
+        body: JSON.stringify(snip),
     });
     return res.json();
 }

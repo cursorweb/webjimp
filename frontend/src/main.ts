@@ -4,8 +4,11 @@ import { AppState } from "./AppState";
 let app: AppState;
 
 window.setup = () => {
-    createCanvas(800, 600).parent("canvas-container");
+    const canvas = createCanvas(800, 600).parent("canvas-container");
     app = new AppState();
+    canvas.elt.addEventListener("contextmenu", e => {
+        e.preventDefault();
+    });
 };
 
 window.draw = () => {
@@ -13,20 +16,20 @@ window.draw = () => {
     app.active.draw();
 };
 
-function onCanvas() {
+function inCanvas() {
     return mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height;
 }
 
-window.mousePressed = () => {
-    if (onCanvas()) {
-        app.active.mousePressed();
+window.mousePressed = e => {
+    if (inCanvas()) {
+        app.active.mousePressed(e!);
     }
 };
 
-window.mouseDragged = () => {
-    if (onCanvas()) {
-        app.active.mouseDragged();
+window.mouseDragged = e => {
+    if (inCanvas()) {
+        app.active.mouseDragged(e!);
     }
 };
 
-window.mouseReleased = () => app.active.mouseReleased();
+window.mouseReleased = e => app.active.mouseReleased(e!);
