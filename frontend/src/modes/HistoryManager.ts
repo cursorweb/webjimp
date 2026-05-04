@@ -1,4 +1,7 @@
-import type { Command } from "./Command";
+export interface Command {
+    execute(): void;
+    undo(): void;
+}
 
 export class HistoryManager {
     private static readonly MAX_HISTORY = 32;

@@ -1,7 +1,8 @@
-import { EraseCommand, type Command } from "../Command";
+import { EraseCommand } from "../DrawingCommand";
 import { Brush } from "./Brush";
 import { Stroke } from "../Stroke";
 import type { Layer } from "../Layer";
+import type { Command } from "../../HistoryManager";
 
 export class EraserBrush extends Brush {
     private currentStroke: Stroke | null = null;

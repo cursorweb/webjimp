@@ -1,11 +1,16 @@
+import type { Command } from "../HistoryManager";
+import { AddPointCommand, ChangeBoxCommand, RemovePointCommand } from "./SnipCommand";
+
 export interface ClickPoint {
     x: number;
     y: number;
     foreground: boolean;
 }
 
+export interface Box { x1: number; y1: number; x2: number; y2: number; }
+
 export interface SnipPayload {
-    box: { x1: number; y1: number; x2: number; y2: number };
+    box: Box;
     points: ClickPoint[];
 }
 
@@ -15,41 +20,42 @@ const DRAG_THRESHOLD = 10;
 const POINT_HIT_RADIUS = POINT_RADIUS + 4;
 
 type HandleId = "tl" | "tr" | "bl" | "br";
-interface Box { x1: number; y1: number; x2: number; y2: number; }
 
 type DragAction =
     | { kind: "draw"; sx: number; sy: number; makeBox: boolean }
-    | { kind: "move"; sx: number; sy: number; origBox: Box; moved: boolean }
+    | { kind: "move"; sx: number; sy: number; moved: boolean }
     | { kind: "resize"; handleId: HandleId; dx: number; dy: number };
 
 export class SnipEditor {
-    private box: Box | null = null;
-    private points: ClickPoint[] = [];
+    box: Box | null = null;
+    points: ClickPoint[] = [];
     private drag: DragAction | null = null;
+    private prevBox: Box | null = null;
 
     get hasBox(): boolean { return this.box != null; }
 
-    /** x, y in canvas pixels */
-    onMousePressed(x: number, y: number, backgroundPoint: boolean): void {
+    /** Left click: remove nearby point, or start a drag */
+    onLeftPressed(x: number, y: number): Command | null {
         const hitIdx = this.points.findIndex(p => dist2(p.x, p.y, x, y) <= POINT_HIT_RADIUS ** 2);
         if (hitIdx >= 0) {
-            this.points.splice(hitIdx, 1);
-            return;
+            return new RemovePointCommand(hitIdx, this.points[hitIdx], this);
         }
 
-        if (backgroundPoint) {
-            this.points.push({ x, y, foreground: false });
-            return;
-        }
-
+        this.prevBox = this.box;
         const handleId = this.hitHandle(x, y);
         if (handleId) {
             this.drag = { kind: "resize", handleId, ...this.fixedCorner(handleId) };
         } else if (this.box && inRect(x, y, this.box.x1, this.box.y1, this.box.x2, this.box.y2)) {
-            this.drag = { kind: "move", sx: x, sy: y, origBox: this.box, moved: false };
+            this.drag = { kind: "move", sx: x, sy: y, moved: false };
         } else {
             this.drag = { kind: "draw", sx: x, sy: y, makeBox: false };
         }
+        return null;
+    }
+
+    /** Right click: always add a background point */
+    onRightPressed(x: number, y: number): Command {
+        return new AddPointCommand({ x, y, foreground: false }, this);
     }
 
     onMouseDragged(x: number, y: number): void {
@@ -62,11 +68,11 @@ export class SnipEditor {
                 this.box = makeBox(sx, sy, x, y);
             }
         } else if (this.drag.kind == "move") {
-            const { sx, sy, origBox } = this.drag;
+            const { sx, sy } = this.drag;
             if (dist2(sx, sy, x, y) >= DRAG_THRESHOLD ** 2) {
                 this.drag.moved = true;
                 const dx = x - sx, dy = y - sy;
-                this.box = { x1: origBox.x1 + dx, y1: origBox.y1 + dy, x2: origBox.x2 + dx, y2: origBox.y2 + dy };
+                this.box = { x1: this.prevBox!.x1 + dx, y1: this.prevBox!.y1 + dy, x2: this.prevBox!.x2 + dx, y2: this.prevBox!.y2 + dy };
             }
         } else {
             // resize
@@ -74,15 +80,24 @@ export class SnipEditor {
         }
     }
 
-    onMouseReleased(x: number, y: number): void {
-        if (!this.drag) return;
+    onMouseReleased(x: number, y: number): Command | null {
+        if (!this.drag) return null;
 
-        if ((this.drag.kind == "draw" && !this.drag.makeBox) ||
-            (this.drag.kind == "move" && !this.drag.moved)) {
-            this.points.push({ x, y, foreground: true });
+        let cmd: Command | null = null;
+        if (this.drag.kind == "draw") {
+            cmd = this.drag.makeBox && this.box
+                ? new ChangeBoxCommand(this.prevBox, this.box, this)
+                : new AddPointCommand({ x, y, foreground: true }, this);
+        } else if (this.drag.kind == "move") {
+            cmd = this.drag.moved && this.box
+                ? new ChangeBoxCommand(this.prevBox, this.box, this)
+                : new AddPointCommand({ x, y, foreground: true }, this);
+        } else {
+            if (this.box) cmd = new ChangeBoxCommand(this.prevBox, this.box, this);
         }
 
         this.drag = null;
+        return cmd;
     }
 
     /** Returns all coords converted to image space */

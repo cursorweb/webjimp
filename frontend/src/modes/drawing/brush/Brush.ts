@@ -1,5 +1,5 @@
+import type { Command } from "../../HistoryManager";
 import type { Layer } from "../Layer";
-import type { Command } from "../Command";
 
 export abstract class Brush {
     abstract onMousePressed(): void;

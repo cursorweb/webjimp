@@ -1,4 +1,5 @@
 import { embed } from "./api";
+import { HistoryManager } from "../HistoryManager";
 import { Mode } from "../Mode";
 import { SnipEditor } from "./SnipEditor";
 
@@ -9,6 +10,7 @@ export class CuttingMode extends Mode {
     private sourceImage: ImageBitmap | null = null;
     private scale = 1;
     private editor = new SnipEditor();
+    private history = new HistoryManager();
 
     /**
      * If reviewSticker is null, then we are in snipping phase
@@ -81,7 +83,9 @@ export class CuttingMode extends Mode {
 
     mousePressed(e: MouseEvent): void {
         if (!this.sourceImage || this.reviewSticker) return;
-        this.editor.onMousePressed(constrain(mouseX, 0, width), constrain(mouseY, 0, height), e.button == 2);
+        const x = constrain(mouseX, 0, width), y = constrain(mouseY, 0, height);
+        const cmd = e.button == 2 ? this.editor.onRightPressed(x, y) : this.editor.onLeftPressed(x, y);
+        if (cmd) this.history.executeCommand(cmd);
     }
 
     mouseDragged(): void {
@@ -91,10 +95,11 @@ export class CuttingMode extends Mode {
 
     mouseReleased(): void {
         if (!this.sourceImage || this.reviewSticker) return;
-        this.editor.onMouseReleased(constrain(mouseX, 0, width), constrain(mouseY, 0, height));
+        const cmd = this.editor.onMouseReleased(constrain(mouseX, 0, width), constrain(mouseY, 0, height));
+        if (cmd) this.history.executeCommand(cmd);
         this.segmentBtn.disabled = !this.editor.hasBox;
     }
 
-    onUndo(): void { }
-    onRedo(): void { }
+    onUndo(): void { this.history.undo(); }
+    onRedo(): void { this.history.redo(); }
 }

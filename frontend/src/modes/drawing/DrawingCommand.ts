@@ -1,11 +1,6 @@
+import type { Command } from "../HistoryManager";
 import type { Layer } from "./Layer";
 import type { Stroke } from "./Stroke";
-
-export interface Command {
-    execute(): void;
-    undo(): void;
-}
-
 
 export class AddStrokeCommand implements Command {
     constructor(private layer: Layer, private stroke: Stroke) { }

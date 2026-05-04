@@ -1,6 +1,6 @@
 import { Brush } from "./brush/Brush";
 import { EraserBrush } from "./brush/EraserBrush";
-import { HistoryManager } from "./HistoryManager";
+import { HistoryManager } from "../HistoryManager";
 import { LayerManager } from "./LayerManager";
 import { Mode } from "../Mode";
 import { PaintBrush } from "./brush/PaintBrush";
