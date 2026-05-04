@@ -16,15 +16,15 @@ export interface SnipPayload {
 
 const HANDLE_RADIUS = 8;
 const POINT_RADIUS = 6;
-const DRAG_THRESHOLD = 10;
 const POINT_HIT_RADIUS = POINT_RADIUS + 4;
 
 type HandleId = "tl" | "tr" | "bl" | "br";
 
+// TODO: if the selection is too small, ignore it
 type DragAction =
     | { kind: "draw"; sx: number; sy: number; makeBox: boolean }
     | { kind: "move"; sx: number; sy: number; moved: boolean }
-    | { kind: "resize"; handleId: HandleId; dx: number; dy: number };
+    | { kind: "resize"; handleId: HandleId; ax: number; ay: number };
 
 export class SnipEditor {
     box: Box | null = null;
@@ -44,7 +44,7 @@ export class SnipEditor {
         this.prevBox = this.box;
         const handleId = this.hitHandle(x, y);
         if (handleId) {
-            this.drag = { kind: "resize", handleId, ...this.fixedCorner(handleId) };
+            this.drag = { kind: "resize", handleId, ...this.fixedAnchor(handleId) };
         } else if (this.box && inRect(x, y, this.box.x1, this.box.y1, this.box.x2, this.box.y2)) {
             this.drag = { kind: "move", sx: x, sy: y, moved: false };
         } else {
@@ -53,8 +53,13 @@ export class SnipEditor {
         return null;
     }
 
-    /** Right click: always add a background point */
+    /** Right click: always add a background point, or remove point */
     onRightPressed(x: number, y: number): Command {
+        const hitIdx = this.points.findIndex(p => dist2(p.x, p.y, x, y) <= POINT_HIT_RADIUS ** 2);
+        if (hitIdx >= 0) {
+            return new RemovePointCommand(hitIdx, this.points[hitIdx], this);
+        }
+
         return new AddPointCommand({ x, y, foreground: false }, this);
     }
 
@@ -63,20 +68,16 @@ export class SnipEditor {
 
         if (this.drag.kind == "draw") {
             const { sx, sy } = this.drag;
-            if (dist2(sx, sy, x, y) >= DRAG_THRESHOLD ** 2) {
-                this.drag.makeBox = true;
-                this.box = makeBox(sx, sy, x, y);
-            }
+            this.drag.makeBox = true;
+            this.box = makeBox(sx, sy, x, y);
         } else if (this.drag.kind == "move") {
             const { sx, sy } = this.drag;
-            if (dist2(sx, sy, x, y) >= DRAG_THRESHOLD ** 2) {
-                this.drag.moved = true;
-                const dx = x - sx, dy = y - sy;
-                this.box = { x1: this.prevBox!.x1 + dx, y1: this.prevBox!.y1 + dy, x2: this.prevBox!.x2 + dx, y2: this.prevBox!.y2 + dy };
-            }
+            this.drag.moved = true;
+            const dx = x - sx, dy = y - sy;
+            this.box = { x1: this.prevBox!.x1 + dx, y1: this.prevBox!.y1 + dy, x2: this.prevBox!.x2 + dx, y2: this.prevBox!.y2 + dy };
         } else {
             // resize
-            this.box = makeBox(this.drag.dx, this.drag.dy, x, y);
+            this.box = makeBox(this.drag.ax, this.drag.ay, x, y);
         }
     }
 
@@ -89,9 +90,8 @@ export class SnipEditor {
                 ? new ChangeBoxCommand(this.prevBox, this.box, this)
                 : new AddPointCommand({ x, y, foreground: true }, this);
         } else if (this.drag.kind == "move") {
-            cmd = this.drag.moved && this.box
-                ? new ChangeBoxCommand(this.prevBox, this.box, this)
-                : new AddPointCommand({ x, y, foreground: true }, this);
+            if (this.drag.moved && this.box) cmd = new ChangeBoxCommand(this.prevBox, this.box, this);
+            else cmd = new AddPointCommand({ x, y, foreground: true }, this);
         } else {
             if (this.box) cmd = new ChangeBoxCommand(this.prevBox, this.box, this);
         }
@@ -123,7 +123,7 @@ export class SnipEditor {
 
     private drawBox(b: Box): void {
         noFill();
-        stroke(120, 30, 40);
+        stroke(17, 58, 240);
         strokeWeight(2);
         rect(b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
 
@@ -154,11 +154,11 @@ export class SnipEditor {
         return null;
     }
 
-    private fixedCorner(handle: HandleId): { dx: number; dy: number } {
+    private fixedAnchor(handle: HandleId): { ax: number; ay: number } {
         const { x1, y1, x2, y2 } = this.box!;
         return {
-            dx: handle.includes("l") ? x2 : x1,
-            dy: handle.includes("t") ? y2 : y1,
+            ax: handle.includes("l") ? x2 : x1,
+            ay: handle.includes("t") ? y2 : y1,
         };
     }
 
