@@ -1,22 +1,21 @@
-import { embed, getSticker } from "./api";
+import { getSticker } from "./api";
+import type { StickerLibrary } from "../StickerLibrary";
 import type { SnipUI } from "./SnipUI";
 
 const MAX_W = 800;
 const MAX_H = 600;
 
-/**
- * StickerManager takes in input from SnipUI
- */
 export class StickerManager {
     private sourceImage: ImageBitmap | null = null;
-    private statusEl = document.querySelector<HTMLSpanElement>(".embed-status")!;
-    private potentialSticker: ImageBitmap | null = null;
 
+    /** Segmented sticker, pending acceptance */
+    private sticker: ImageBitmap | null = null;
+    private stickerURL: string | null = null;
     private polygonOverlays: [number, number][][] | null = null;
 
     private scale = 1;
 
-    constructor(private editor: SnipUI) { }
+    constructor(private editor: SnipUI, private library: StickerLibrary) { }
 
     async loadBlob(blob: Blob) {
         const raw = await createImageBitmap(blob);
@@ -30,13 +29,6 @@ export class StickerManager {
         this.sourceImage = scaled;
         this.scale = scale;
 
-        // todo: log based
-        // debug: already embedded once
-        // this.statusEl.textContent = "⏳ embedding…";
-        // embed(blob)
-        //     .then(data => { this.statusEl.textContent = data.success ? "✅ embedded" : `❌ ${data.error}`; })
-        //     .catch(err => { this.statusEl.textContent = `❌ ${err.message}`; });
-
         return [w, h];
     }
 
@@ -45,9 +37,10 @@ export class StickerManager {
             (drawingContext as CanvasRenderingContext2D).drawImage(this.sourceImage, 0, 0);
         }
 
-        push();
-        scale(this.scale);
         if (this.polygonOverlays) {
+            push();
+            scale(this.scale);
+            noStroke();
             fill(0, 0, 255, 0.5 * 255);
             for (const poly of this.polygonOverlays) {
                 beginShape();
@@ -56,12 +49,17 @@ export class StickerManager {
                 }
                 endShape();
             }
+            pop();
         }
-        pop();
     }
 
-    addSticker(): any {
-        throw new Error("Method not implemented.");
+    addSticker(): void {
+        if (!this.sticker || !this.stickerURL) return;
+        this.library.add(this.stickerURL, this.sticker);
+
+        // prevent accidentally double closing (ownership!)
+        this.sticker = null;
+        this.stickerURL = null;
     }
 
     async segment() {
@@ -74,9 +72,10 @@ export class StickerManager {
         }
 
         this.polygonOverlays = data.polygons;
+        this.stickerURL = data.sticker;
 
         const blob = await (await fetch(data.sticker)).blob();
-        this.potentialSticker?.close();
-        this.potentialSticker = await createImageBitmap(blob);
+        this.sticker?.close();
+        this.sticker = await createImageBitmap(blob);
     }
 }

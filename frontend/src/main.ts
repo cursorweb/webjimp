@@ -20,16 +20,20 @@ function inCanvas() {
     return mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height;
 }
 
-window.mousePressed = e => {
+window.mousePressed = () => {
     if (inCanvas()) {
-        app.active.mousePressed(e!);
+        app.active.mousePressed();
     }
 };
 
-window.mouseDragged = e => {
+window.mouseDragged = () => {
     if (inCanvas()) {
-        app.active.mouseDragged(e!);
+        app.active.mouseDragged();
     }
 };
 
-window.mouseReleased = e => app.active.mouseReleased(e!);
+window.mouseReleased = () => {
+    if (inCanvas()) {
+        app.active.mouseReleased();
+    }
+};

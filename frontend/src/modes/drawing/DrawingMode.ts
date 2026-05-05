@@ -5,6 +5,8 @@ import { LayerManager } from "./LayerManager";
 import { Mode } from "../Mode";
 import { PaintBrush } from "./brush/PaintBrush";
 import { SelectBrush } from "./brush/SelectBrush";
+import { Sticker } from "../Sticker";
+import type { StickerLibrary } from "../StickerLibrary";
 
 export class DrawingMode extends Mode {
     private history = new HistoryManager();
@@ -19,7 +21,7 @@ export class DrawingMode extends Mode {
     private paintBtn = document.querySelector<HTMLButtonElement>(".paint-btn")!;
     private eraserBtn = document.querySelector<HTMLButtonElement>(".eraser-btn")!;
 
-    constructor() {
+    constructor(library: StickerLibrary) {
         super();
         this.activeBrush = this.paintBrush;
         this.paintBrush.activate();
@@ -28,6 +30,11 @@ export class DrawingMode extends Mode {
         this.paintBtn.addEventListener("click", () => this.setActiveBrush(this.paintBrush, this.paintBtn));
         this.eraserBtn.addEventListener("click", () => this.setActiveBrush(this.eraserBrush, this.eraserBtn));
         this.setActiveBrush(this.paintBrush, this.paintBtn);
+
+        library.onPlace = ({ bitmap }) => {
+            const s = new Sticker(width / 2 - bitmap.width / 2, height / 2 - bitmap.height / 2, bitmap);
+            this.layerManager.getActiveLayer().stickers.push(s);
+        };
     }
 
     private setActiveBrush(brush: Brush, btn: HTMLButtonElement) {
@@ -51,7 +58,10 @@ export class DrawingMode extends Mode {
     }
 
     mousePressed() { this.activeBrush.onMousePressed(); }
-    mouseDragged() { this.activeBrush.onMouseDragged(); }
+
+    mouseDragged() {
+        this.activeBrush.onMouseDragged();
+    }
 
     mouseReleased() {
         const cmd = this.activeBrush.onMouseReleased(this.layerManager.getActiveLayer());

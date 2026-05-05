@@ -1,19 +1,22 @@
 import { HistoryManager } from "../HistoryManager";
 import { Mode } from "../Mode";
+import type { StickerLibrary } from "../StickerLibrary";
 import { SnipUI } from "./SnipUI";
 import { StickerManager } from "./StickerManager";
 
 export class CuttingMode extends Mode {
-    private editor = new SnipUI();
-    private stickerManager = new StickerManager(this.editor);
+    private editor: SnipUI;
+    private stickerManager: StickerManager;
     private history = new HistoryManager();
 
     private imageSubmit = document.querySelector<HTMLDivElement>(".image-submit")!;
     private segmentBtn = document.querySelector<HTMLButtonElement>(".segment-btn")!;
     private acceptBtn = document.querySelector<HTMLButtonElement>(".accept-btn")!;
 
-    constructor() {
+    constructor(library: StickerLibrary) {
         super();
+        this.editor = new SnipUI();
+        this.stickerManager = new StickerManager(this.editor, library);
 
         this.imageSubmit.addEventListener("paste", e => {
             const item = Array.from(e.clipboardData?.items ?? []).find(i => i.type.startsWith("image/"));
@@ -28,7 +31,7 @@ export class CuttingMode extends Mode {
         });
 
         this.segmentBtn.addEventListener("click", () => this.stickerManager.segment());
-        this.acceptBtn.addEventListener("click", () => this.stickerManager.addSticker());
+        this.acceptBtn.addEventListener("click", () => this.addSticker());
 
         // debugging purposes
         fetch("example.png").then(r => r.blob()).then(b => this.loadBlob(b));
@@ -68,5 +71,10 @@ export class CuttingMode extends Mode {
 
     onRedo(): void {
         this.history.redo();
+    }
+
+    private addSticker(): void {
+        this.stickerManager.addSticker();
+        this.editor.clear();
     }
 }
