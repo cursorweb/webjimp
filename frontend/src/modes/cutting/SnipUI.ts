@@ -1,5 +1,7 @@
 import type { Command } from "../HistoryManager";
 import { AddPointCommand, ChangeBoxCommand, RemovePointCommand } from "./SnipCommand";
+import { BoxHandle } from "../BoxHandle";
+import type { HandleId } from "../BoxHandle";
 
 export interface ClickPoint {
     x: number;
@@ -14,11 +16,8 @@ export interface SnipPayload {
     points: ClickPoint[];
 }
 
-const HANDLE_RADIUS = 8;
 const POINT_RADIUS = 6;
 const POINT_HIT_RADIUS = POINT_RADIUS + 4;
-
-type HandleId = "tl" | "tr" | "bl" | "br";
 
 // TODO: if the selection is too small, ignore it
 type DragAction =
@@ -50,12 +49,15 @@ export class SnipUI {
         }
 
         this.prevBox = this.box;
-        const handleId = this.hitHandle(x, y);
+        const bh = this.boxHandle();
+        const handleId = bh?.hitHandle(x, y) ?? null;
         if (handleId) {
-            this.drag = { kind: "resize", handleId, ...this.fixedAnchor(handleId) };
-        } else if (this.box && inRect(x, y, this.box.x1, this.box.y1, this.box.x2, this.box.y2)) {
+            const [ax, ay] = bh!.anchor(handleId);
+            this.drag = { kind: "resize", handleId, ax, ay };
+        } else if (bh?.contains(x, y)) {
             this.drag = { kind: "move", sx: x, sy: y, moved: false };
         } else {
+            // makebox becomes true only once you start dragging
             this.drag = { kind: "draw", sx: x, sy: y, makeBox: false };
         }
         return null;
@@ -119,27 +121,17 @@ export class SnipUI {
 
     draw(): void {
         push();
-        if (this.box) {
-            this.drawBox(this.box);
-        }
-
+        this.boxHandle()?.draw();
         for (const pt of this.points) {
             this.drawPoint(pt);
         }
         pop();
     }
 
-    private drawBox(b: Box): void {
-        noFill();
-        stroke(17, 58, 240);
-        strokeWeight(2);
-        rect(b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
-
-        fill(255);
-        strokeWeight(1.5);
-        for (const [hx, hy] of this.corners(b)) {
-            circle(hx, hy, HANDLE_RADIUS * 2);
-        }
+    private boxHandle(): BoxHandle | null {
+        if (!this.box) return null;
+        const { x1, y1, x2, y2 } = this.box;
+        return new BoxHandle(x1, y1, x2 - x1, y2 - y1);
     }
 
     private drawPoint(pt: ClickPoint): void {
@@ -147,31 +139,6 @@ export class SnipUI {
         stroke(0, 0, 0, 180);
         fill(pt.foreground ? color(60, 200, 60) : color(220, 60, 60));
         circle(pt.x, pt.y, POINT_RADIUS * 2);
-    }
-
-    private hitHandle(x: number, y: number): HandleId | null {
-        if (!this.box) return null;
-        const ids: HandleId[] = ["tl", "tr", "bl", "br"];
-        const corners = this.corners(this.box);
-        for (let i = 0; i < ids.length; i++) {
-            const [hx, hy] = corners[i];
-            if (dist2(hx, hy, x, y) <= HANDLE_RADIUS ** 2) {
-                return ids[i];
-            }
-        }
-        return null;
-    }
-
-    private fixedAnchor(handle: HandleId): { ax: number; ay: number } {
-        const { x1, y1, x2, y2 } = this.box!;
-        return {
-            ax: handle.includes("l") ? x2 : x1,
-            ay: handle.includes("t") ? y2 : y1,
-        };
-    }
-
-    private corners(b: Box): [number, number][] {
-        return [[b.x1, b.y1], [b.x2, b.y1], [b.x1, b.y2], [b.x2, b.y2]];
     }
 
     clear(): void {
@@ -190,8 +157,4 @@ function makeBox(x1: number, y1: number, x2: number, y2: number): Box {
         x1: Math.min(x1, x2), y1: Math.min(y1, y2),
         x2: Math.max(x1, x2), y2: Math.max(y1, y2),
     };
-}
-
-function inRect(mx: number, my: number, x1: number, y1: number, x2: number, y2: number) {
-    return mx >= x1 && my >= y1 && mx <= x2 && my <= y2;
 }
