@@ -254,3 +254,87 @@ async def get_sticker_transparent(req: MaskRequest):
 
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+@app.post("/get-sticker")
+async def get_sticker(req: MaskRequest):
+    """Return entire image mask as well as close-cropped mask"""
+    try:
+        global img_rgb
+
+        if img_rgb is None:
+            return {
+                "success": False,
+                "error": "No image embedded yet. Call /embed first.",
+            }
+
+        # Extract bounding box
+        box = np.array([req.box.x1, req.box.y1, req.box.x2, req.box.y2])
+
+        # Prepare point prompts if provided
+        point_coords = None
+        point_labels = None
+
+        if req.points:
+            point_coords = np.array([[p.x, p.y] for p in req.points])
+            point_labels = np.array([1 if p.foreground else 0 for p in req.points])
+
+        # Segment with SAM2
+        with torch.inference_mode():
+            masks, _, _ = predictor.predict(
+                point_coords=point_coords,
+                point_labels=point_labels,
+                box=box[None, :],
+                multimask_output=False,
+            )
+
+        mask = masks[0]
+
+        # Tight crop
+        rows = np.any(mask, axis=1)
+        cols = np.any(mask, axis=0)
+        rmin, rmax = np.where(rows)[0][[0, -1]]
+        cmin, cmax = np.where(cols)[0][[0, -1]]
+
+        # Crop image to just the sticker area
+        cropped_rgb = img_rgb[rmin : rmax + 1, cmin : cmax + 1]
+        cropped_mask = mask[rmin : rmax + 1, cmin : cmax + 1]
+
+        # Create sticker
+        h, w = cropped_rgb.shape[:2]
+        sticker = np.zeros((h, w, 4), dtype=np.uint8)
+        sticker[..., :3] = cropped_rgb
+
+        # Set alpha channel
+        sticker[..., 3] = cropped_mask.astype(np.uint8) * 255
+
+        # Get polygons for overlay preview
+        contours, hierarchy = cv2.findContours(
+            mask.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        )
+
+        # should be: list<list<[int, int]>>
+        # if this gets slow, lets optimize to have less points
+        polygons = [
+            cnt.squeeze(1).tolist()
+            for i, cnt in enumerate(contours)
+            if hierarchy[0][i][3] == -1
+        ]
+
+        # Convert to base64
+        _, sticker_buffer = cv2.imencode(
+            ".png", cv2.cvtColor(sticker, cv2.COLOR_RGBA2BGRA)
+        )
+
+        sticker_base64 = base64.b64encode(sticker_buffer).decode()
+
+        return {
+            "success": True,
+            "polygons": polygons,
+            "sticker": f"data:image/png;base64,{sticker_base64}",
+            "sticker_width": w,
+            "sticker_height": h,
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}

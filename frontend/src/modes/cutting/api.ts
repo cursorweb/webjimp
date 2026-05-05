@@ -1,4 +1,4 @@
-import type { SnipPayload } from "./SnipEditor";
+import type { SnipPayload } from "./SnipUI";
 
 export const API_BACKEND = "http://127.0.0.1:8000";
 
@@ -11,14 +11,15 @@ export async function embed(blob: Blob): Promise<{ success: boolean; error?: str
 
 export interface SegmentResult {
     success: boolean;
+    polygons: [number, number][][];
     sticker: string;
     sticker_width: number;
     sticker_height: number;
     error?: string;
 }
 
-export async function segment(snip: SnipPayload): Promise<SegmentResult> {
-    const res = await fetch(`${API_BACKEND}/get-sticker-transparent`, {
+export async function getSticker(snip: SnipPayload): Promise<SegmentResult> {
+    const res = await fetch(`${API_BACKEND}/get-sticker`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(snip),

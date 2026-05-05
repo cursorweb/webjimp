@@ -1,11 +1,11 @@
 import type { Command } from "../HistoryManager";
-import type { Box, ClickPoint, SnipEditor } from "./SnipEditor";
+import type { Box, ClickPoint, SnipUI } from "./SnipUI";
 
 export class ChangeBoxCommand implements Command {
     constructor(
         private previousBox: Box | null,
         private currentBox: Box,
-        private editor: SnipEditor
+        private editor: SnipUI
     ) { }
 
     execute() { this.editor.box = this.currentBox; }
@@ -15,7 +15,7 @@ export class ChangeBoxCommand implements Command {
 export class AddPointCommand implements Command {
     constructor(
         private point: ClickPoint,
-        private editor: SnipEditor,
+        private editor: SnipUI,
     ) { }
 
     execute() { this.editor.points.push(this.point); }
@@ -27,7 +27,7 @@ export class RemovePointCommand implements Command {
     constructor(
         private idx: number,
         private point: ClickPoint,
-        private editor: SnipEditor,
+        private editor: SnipUI,
     ) { }
 
     execute() { this.editor.points.splice(this.idx, 1); }
